@@ -43,7 +43,7 @@
     "updater": {
       "active": true,
       "endpoints": [
-        "https://github.com/<OWNER>/<REPO>/releases/latest/download/latest.json"
+        "https://github.com/jaydennn888/launchpad/releases/latest/download/latest.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE0ODQ1QkU5OUQ2N0E2NkMKUldSc3BtZWQ2VnVFRkNYLzZ0ZkVtWlYzM2VUNm82ZUZoTlBOQnJQYkFZM3pib0wyc1YvKzNEWlYK",
       "windows": {
