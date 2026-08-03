@@ -1026,8 +1026,12 @@ fn is_port_responsive(port: u16) -> bool {
 /// temp folder where the server originally lived. If the server is already running
 /// and responsive, returns Ok immediately.
 #[tauri::command]
-fn start_trending_server() -> Result<(), String> {
+fn start_trending_server(app_handle: tauri::AppHandle) -> Result<(), String> {
     use std::os::windows::process::CommandExt;
+
+    // CREATE_NO_WINDOW (0x08000000): launch the child WITHOUT a visible console
+    // window. Prevents the black CMD flash on every start / restart.
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
     const TRENDING_PORT: u16 = 18765;
 
@@ -1038,46 +1042,27 @@ fn start_trending_server() -> Result<(), String> {
         .join("trending");
     let server_path = cfg.join("server.py");
 
-    // Step 1: ALWAYS re-sync the newest server.py from the known source dirs.
-    // Previously the copy only happened on first run, so any later edit to
-    // server.py never propagated after a rebuild -- this was the root cause of
-    // "updated the trending feature but it won't refresh". data.json is runtime
-    // state and is intentionally left untouched.
-    let sources: Vec<PathBuf> = vec![
-        {
-            let exe = std::env::current_exe().map_err(|e| e.to_string())?;
-            exe.parent()
-                .and_then(|p| p.parent())
-                .map(|p| p.join("6a6729aa07b17f59234a2014").join("server.py"))
-                .unwrap_or_default()
-        },
-        PathBuf::from(r"E:\跑ai\6a6729aa07b17f59234a2014\server.py"),
-        PathBuf::from(r"E:\跑ai\6a66f577deed9fda3c50e229\trending-app\server.py"),
-        PathBuf::from("../6a6729aa07b17f59234a2014/server.py"),
-        PathBuf::from("../trending-app/server.py"),
-    ];
-    let mut best_src: Option<PathBuf> = None;
-    let mut best_mtime = std::time::UNIX_EPOCH;
-    for s in &sources {
-        if let Ok(md) = std::fs::metadata(s) {
-            if let Ok(m) = md.modified() {
-                if m > best_mtime {
-                    best_mtime = m;
-                    best_src = Some(s.clone());
-                }
-            }
-        }
-    }
+    // Step 1: ALWAYS re-sync server.py from the bundled resources dir.
+    // The server is now packaged inside the app (resources/trending/server.py)
+    // so it no longer depends on volatile dev-source paths. We still copy it to
+    // the stable config dir so runtime state (data.json) lives outside the
+    // read-only resource bundle.
+    let bundled = app_handle
+        .path()
+        .resource_dir()
+        .map_err(|e| e.to_string())?
+        .join("trending")
+        .join("server.py");
     let _ = std::fs::create_dir_all(&cfg);
-    if let Some(src) = &best_src {
+    if bundled.exists() {
         // Drop stale bytecode so the freshly copied source is recompiled.
         let _ = std::fs::remove_dir_all(cfg.join("__pycache__"));
-        let _ = std::fs::copy(src, &server_path);
+        let _ = std::fs::copy(&bundled, &server_path);
     }
 
     if !server_path.exists() {
         return Err(
-            "未找到热搜服务 server.py，请将其放入 %APPDATA%/Launchpad/trending/ 后重试".to_string(),
+            "未找到热搜服务 server.py（应已随安装包附带）。请重新安装 Launchpad 后重试".to_string(),
         );
     }
 
@@ -1085,7 +1070,7 @@ fn start_trending_server() -> Result<(), String> {
     // server is launched DETACHED and survives app restarts, so without this the
     // old code keeps serving and a freshly-synced copy could never bind.
     kill_process_on_port(TRENDING_PORT);
-    std::thread::sleep(std::time::Duration::from_millis(800));
+    std::thread::sleep(std::time::Duration::from_millis(500));
 
     // Step 3: launch. Build a candidate list of Python interpreters.
     // Bare names (`py`/`python`/...) only resolve if Python is on the system PATH.
@@ -1150,7 +1135,7 @@ fn start_trending_server() -> Result<(), String> {
             .current_dir(&cfg)
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
-            .creation_flags(0x0000_0008) // DETACHED_PROCESS - don't block, don't show console
+            .creation_flags(CREATE_NO_WINDOW) // 不再弹黑窗
             .spawn()
         {
             Ok(_child) => {
@@ -1174,13 +1159,15 @@ fn start_trending_server() -> Result<(), String> {
 /// (built into Windows 10+) and ignores errors when the port is already free.
 /// Only the LISTENING socket is targeted; TIME_WAIT leftovers are ignored.
 fn kill_process_on_port(port: u16) {
+    use std::os::windows::process::CommandExt;
     let ps = format!(
         "Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue | Where-Object {{ $_.State -eq 'Listen' }} | ForEach-Object {{ Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }}"
     );
     let _ = std::process::Command::new("powershell")
-        .args(["-NoProfile", "-NonInteractive", "-Command", &ps])
+        .args(["-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", &ps])
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
+        .creation_flags(0x0800_0000) // CREATE_NO_WINDOW
         .status();
 }
 
@@ -1623,11 +1610,9 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
-            // 启动即预热热搜服务：后台拉起本地 Python 服务，
-            // 这样打开热搜视图时服务早已就绪，无需冷启动等待
-            std::thread::spawn(|| {
-                let _ = start_trending_server();
-            });
+            // 注意：不再启动时预热热搜服务。
+            // 热搜依赖本地 Python，机器若无 Python 会反复重试、弹黑窗、白耗资源。
+            // 改为「进入热搜视图时按需启动」（前端 TrendingView 触发），避免拖慢启动。
 
             // 全局快捷键 Alt+Space：随时唤出 / 收起 Launchpad（Raycast 式浮层）
             let sc = Shortcut::new(Some(Modifiers::ALT), Code::Space);

@@ -41,6 +41,6 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "Launchpad ${{ github.ref_name }}"
           releaseBody: "自动构建发布。下载 Setup.exe 安装,应用内可检测更新。"
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: --config src-tauri/tauri.conf.json

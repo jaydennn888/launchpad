@@ -11,7 +11,7 @@ import {
 } from "../lib/invoke";
 import { getLunarDate, type LunarDate } from "../lib/lunar";
 
-type NavView = "dashboard" | "apps" | "folders" | "notes" | "webview" | "trending" | "todo";
+type NavView = "dashboard" | "apps" | "notes" | "trending" | "todo";
 
 /** Payload dragged from the app grid. */
 interface DragApp { kind: "app"; app: AppInfo }
@@ -90,7 +90,7 @@ export function Sidebar({
       setCurrentDateTime({ date: dateStr, time: timeStr, lunar });
     };
     update();
-    const timer = setInterval(update, 1000);
+    const timer = setInterval(update, 10000);
     return () => clearInterval(timer);
   }, []);
 
@@ -118,7 +118,6 @@ export function Sidebar({
     try {
       const item = await createSidebarItem("folder", "新文件夹", null);
       onItemsChange();
-      setNav("folders");
       setExpanded((prev) => new Set(prev).add(item.id));
       setRenamingId(item.id);
       setRenameValue("新文件夹");
@@ -237,8 +236,8 @@ export function Sidebar({
     else if (next === "todo") onSwitchView?.("todo");
   };
 
-  const listItems = nav === "notes" ? notes : nav === "webview" ? [] : folders;
-  const listTitle = nav === "notes" ? "备忘录" : nav === "webview" ? "网页" : "文件夹";
+  const listItems = nav === "notes" ? notes : folders;
+  const listTitle = nav === "notes" ? "备忘录" : "文件夹";
 
   return (
     <div className="flex h-full">
@@ -254,14 +253,8 @@ export function Sidebar({
           <NavIcon active={nav === "trending"} title="热搜" onClick={() => switchNav("trending")}>
             <Icon name="trending" className="w-4 h-4" />
           </NavIcon>
-          <NavIcon active={nav === "webview"} title="网页" onClick={() => switchNav("webview")}>
-            <Icon name="globe" className="w-4 h-4" />
-          </NavIcon>
           <NavIcon active={nav === "apps"} title="应用" onClick={() => switchNav("apps")}>
             <Icon name="apps" className="w-4 h-4" />
-          </NavIcon>
-          <NavIcon active={nav === "folders"} title="文件夹" onClick={() => switchNav("folders")}>
-            <Icon name="folder" className="w-4 h-4" />
           </NavIcon>
           <NavIcon active={nav === "notes"} title="备忘" onClick={() => switchNav("notes")}>
             <Icon name="note" className="w-4 h-4" />
@@ -341,23 +334,6 @@ export function Sidebar({
               <TrendingPlatformItem label="IT之家" color="#d9261d" />
               <TrendingPlatformItem label="少数派" color="#d12c2c" />
               <TrendingPlatformItem label="虎嗅" color="#ff5722" />
-            </div>
-          </div>
-        ) : nav === "webview" ? (
-          <div className="flex-1 overflow-y-auto px-2.5 py-3">
-            <p className="label-mono mb-2">社交平台</p>
-            <div className="space-y-0.5">
-              <WebViewShortcut label="小红书" onClick={() => onOpenWebView("https://www.xiaohongshu.com/explore", "小红书")} />
-              <WebViewShortcut label="微博" onClick={() => onOpenWebView("https://weibo.com", "微博")} />
-              <WebViewShortcut label="抖音" onClick={() => onOpenWebView("https://www.douyin.com", "抖音")} />
-              <WebViewShortcut label="Bilibili" onClick={() => onOpenWebView("https://www.bilibili.com", "Bilibili")} />
-              <WebViewShortcut label="微信公众号" onClick={() => onOpenWebView("https://mp.weixin.qq.com", "微信公众号")} />
-            </div>
-            <Separator className="my-2" />
-            <p className="label-mono mb-2">工具</p>
-            <div className="space-y-0.5">
-              <WebViewShortcut label="GitHub" onClick={() => onOpenInChrome("https://github.com")} />
-              <WebViewShortcut label="Google" onClick={() => onOpenInChrome("https://www.google.com")} />
             </div>
           </div>
         ) : (

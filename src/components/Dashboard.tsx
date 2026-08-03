@@ -84,7 +84,7 @@ function DashboardHeader({ userName }: { userName: string }) {
       setClock(time);
     };
     update();
-    const timer = setInterval(update, 1000);
+    const timer = setInterval(update, 10000);
     return () => clearInterval(timer);
   }, []);
 
