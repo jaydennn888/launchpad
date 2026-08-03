@@ -1,0 +1,304 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── 字体栈 ────────────────────────────────────────────── */
+/* 统一使用系统无衬线：Windows 优先 Microsoft YaHei UI / Segoe UI Variable，
+   macOS 优先 PingFang / SF Pro，确保中文清晰、数字等高。 */
+
+:root {
+  color-scheme: light;
+
+  /* 编辑瑞士风配色 — 温暖中性（RGB 通道形式，供 Tailwind 透明度修饰符使用） */
+  --paper: 250 249 247;
+  --paper-deep: 245 243 239;
+  --ink: 26 26 26;
+  --ink-muted: 107 107 107;
+  --ink-faint: 160 160 160;
+  --line: rgba(0, 0, 0, 0.08);
+  --line-soft: rgba(0, 0, 0, 0.04);
+  --accent: 13 148 136;
+  --accent-soft: rgba(13, 148, 136, 0.10);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* ── shadcn/ui 主题变量（teal 品牌色映射到 --primary） ── */
+  --background: 40 20% 98%;
+  --foreground: 0 0% 10%;
+  --card: 40 20% 98%;
+  --card-foreground: 0 0% 10%;
+  --popover: 40 20% 98%;
+  --popover-foreground: 0 0% 10%;
+  --primary: 175 84% 32%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 40 14% 94%;
+  --secondary-foreground: 0 0% 10%;
+  --muted: 40 24% 95%;
+  --muted-foreground: 0 0% 42%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 40 12% 89%;
+  --input: 40 12% 89%;
+  --ring: 175 84% 32%;
+  --radius: 0.75rem;
+}
+
+/* 暗色由 app 的 .dark 类驱动（与 useTheme 一致），不再依赖系统媒体查询 */
+.dark {
+  color-scheme: dark;
+
+  --paper: 17 17 19;
+  --paper-deep: 13 13 15;
+  --ink: 236 236 236;
+  --ink-muted: 138 138 138;
+  --ink-faint: 85 85 85;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-soft: rgba(255, 255, 255, 0.04);
+  --accent: 45 212 191;
+  --accent-soft: rgba(45, 212, 191, 0.14);
+
+  /* ── shadcn/ui 暗色变量 ── */
+  --background: 240 8% 7%;
+  --foreground: 0 0% 93%;
+  --card: 240 8% 9%;
+  --card-foreground: 0 0% 93%;
+  --popover: 240 8% 9%;
+  --popover-foreground: 0 0% 93%;
+  --primary: 173 66% 50%;
+  --primary-foreground: 240 8% 9%;
+  --secondary: 240 6% 15%;
+  --secondary-foreground: 0 0% 93%;
+  --muted: 240 6% 14%;
+  --muted-foreground: 0 0% 54%;
+  --destructive: 0 62% 50%;
+  --destructive-foreground: 0 0% 93%;
+  --border: 240 6% 16%;
+  --input: 240 6% 16%;
+  --ring: 173 66% 50%;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: rgb(var(--paper));
+  font-family:
+    "Inter", "PingFang SC", "Microsoft YaHei UI", "Segoe UI Variable",
+    "Segoe UI", "Noto Sans CJK SC", system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+  user-select: none;
+  color: rgb(var(--ink));
+}
+
+/* ── 无拖动区域 ──────────────────────────────────────────── */
+.no-context {
+  -webkit-touch-callout: none;
+}
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+}
+[data-tauri-drag-region] button,
+[data-tauri-drag-region] input,
+[data-tauri-drag-region] [data-no-drag] {
+  -webkit-app-region: no-drag;
+}
+
+/* ── 动效 ───────────────────────────────────────────────── */
+@keyframes enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes enter-scale {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-enter      { animation: enter      0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.animate-enter-scale{ animation: enter-scale 0.20s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@keyframes fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade { animation: fade 0.22s ease both; }
+
+@keyframes pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-pop  { animation: pop 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* ── 滚动条 ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--ink-faint));
+  border-radius: 100px;
+  opacity: 0.3;
+}
+::-webkit-scrollbar-thumb:hover { opacity: 0.6; }
+
+/* ── 选择 ────────────────────────────────────────────────── */
+::selection {
+  background: var(--accent-soft);
+  color: inherit;
+}
+
+/* ── 微交互 ──────────────────────────────────────────────── */
+.btn-micro {
+  transition: transform 0.10s cubic-bezier(0.2, 0.8, 0.2, 1),
+              opacity 0.15s ease,
+              background-color 0.15s ease;
+}
+.btn-micro:active { transform: scale(0.97); }
+
+/* ── 卡片阴影 ────────────────────────────────────────────── */
+.card-shadow {
+  box-shadow: 0 0 0 1px var(--line-soft),
+              0 1px 3px rgba(0,0,0,0.02),
+              0 2px 8px rgba(0,0,0,0.01);
+}
+.card-shadow-hover:hover {
+  box-shadow: 0 0 0 1px var(--line),
+              0 2px 6px rgba(0,0,0,0.03),
+              0 4px 12px rgba(0,0,0,0.02);
+  outline: 1px solid rgb(var(--accent) / 0.16);
+  outline-offset: -1px;
+}
+
+/* ── Dashboard 错落入场（精致极简：用节奏与留白代替堆叠） ── */
+/* Widget entrance is now handled by Motion (motion/react) in Dashboard.tsx */
+
+/* ── 分割线 ──────────────────────────────────────────────── */
+.divider-soft {
+  background: rgb(var(--line));
+  height: 1px;
+}
+
+/* ── 玻璃面板 ───────────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.80);
+  backdrop-filter: blur(24px) saturate(1.3);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+}
+.dark .glass {
+  background: rgba(18, 18, 20, 0.80);
+}
+
+/* ── 图片渲染 ───────────────────────────────────────────── */
+img { image-rendering: -webkit-optimize-contrast; }
+
+/* ── 聚焦环 ─────────────────────────────────────────────── */
+*:focus-visible {
+  outline: 1.5px solid rgb(var(--accent));
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── 等宽字体栈 ─────────────────────────────────────────── */
+.font-mono {
+  font-family: "SF Mono", "JetBrains Mono", "Fira Code", "Cascadia Code",
+               "Menlo", "Monaco", "Consolas", monospace;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: 0;
+}
+
+/* ── 标题字体（已被弃用的 LXGW WenKai 手写衬线替换为干净无衬线） ── */
+.font-display {
+  font-family: "PingFang SC", "Microsoft YaHei UI", "Segoe UI Variable",
+               "Segoe UI", "Noto Sans CJK SC", system-ui, sans-serif;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+/* ── 标签样式 ────────────────────────────────────────────── */
+.label-mono {
+  font-family: "SF Mono", "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--ink-faint));
+}
+
+/* ── 动画延迟 ────────────────────────────────────────────── */
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.10s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.20s; }
+.delay-5 { animation-delay: 0.25s; }
+
+/* ── 动态极光背景（视觉重构：氛围光晕） ──────────────── */
+.aurora {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+  pointer-events: none;
+  will-change: transform;
+}
+.aurora-1 {
+  width: 540px; height: 540px;
+  top: -200px; right: -140px;
+  background: radial-gradient(circle at 50% 50%, rgb(var(--accent) / 0.40), transparent 70%);
+  animation: aurora-float 19s ease-in-out infinite;
+}
+.aurora-2 {
+  width: 480px; height: 480px;
+  bottom: -180px; left: -120px;
+  background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.30), transparent 70%);
+  animation: aurora-float 24s ease-in-out infinite reverse;
+}
+@keyframes aurora-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(34px, 46px) scale(1.10); }
+}
+
+/* ── 玻璃拟态强化（命令面板 / 浮层） ─────────────────── */
+.glass-strong {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(30px) saturate(1.6);
+  -webkit-backdrop-filter: blur(30px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+.dark .glass-strong {
+  background: rgba(20, 20, 24, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* 命令面板 spring 入场 */
+.command-panel { animation: pop-in 0.30s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-10px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 卡片 hover 增强（渐变描边 + 抬升光晕） */
+.card-shadow-hover:hover {
+  box-shadow: 0 0 0 1px var(--line),
+              0 10px 34px rgba(0, 0, 0, 0.07),
+              0 0 22px rgb(var(--accent) / 0.10);
+  outline: 1px solid rgb(var(--accent) / 0.24);
+  outline-offset: -1px;
+  transform: translateY(-2px);
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 0.18s ease, outline-color 0.18s ease;
+}
+
+/* 渐变强调文字（标题 / 品牌点缀） */
+.text-gradient {
+  background: linear-gradient(120deg, rgb(var(--accent)), rgba(99, 102, 241, 0.9));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

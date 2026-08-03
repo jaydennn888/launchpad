@@ -1,0 +1,27 @@
+# dependencies
+node_modules
+/dist
+/dist_build
+
+# rust build artifacts
+/src-tauri/target
+
+# logs
+*.log
+
+# tauri updater signing key (SECRET — never commit)
+.env
+.env.*
+signer_output.txt
+
+# unused vendored cargo registry (deps fetched from crates.io / CARGO_HOME cache)
+src-tauri/vendor/
+
+# stray build-error logs / broken helper scripts (not part of the project)
+meta_err.txt
+src-tauri/fetch-error.txt
+src-tauri/fetch-output.txt
+src-tauri/fetch.bat
+
+# local build dirs (kept outside project)
+launchpad-build*

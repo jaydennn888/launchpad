@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Launchpad",
+  "version": "0.1.0",
+  "identifier": "com.launchpad.app",
+  "build": {
+    "frontendDist": "../dist_build",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Launchpad",
+        "width": 1150,
+        "height": 700,
+        "minWidth": 800,
+        "minHeight": 520,
+        "decorations": false,
+        "transparent": false,
+        "resizable": true,
+        "center": true,
+        "alwaysOnTop": false,
+        "visible": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/icon.ico",
+      "icons/icon.png"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/<OWNER>/<REPO>/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE0ODQ1QkU5OUQ2N0E2NkMKUldSc3BtZWQ2VnVFRkNYLzZ0ZkVtWlYzM2VUNm82ZUZoTlBOQnJQYkFZM3pib0wyc1YvKzNEWlYK",
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}
