@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, type ComponentType } from "react";
 import type { SystemStats, RecentFileInfo, TodoItem } from "../types";
-import { getSystemStats, getRecentFiles, launchApp, revealApp } from "../lib/invoke";
+import { getSystemStats, getRecentFiles, launchApp, revealApp, openInChrome } from "../lib/invoke";
 import { getLunarDate } from "../lib/lunar";
 import ClipboardHistory from "./ClipboardHistory";
 import PomodoroTimer from "./PomodoroTimer";
@@ -472,6 +472,128 @@ function CalculatorWidget() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  6.7 自媒体平台一键入口 Widget                                      */
+/* ------------------------------------------------------------------ */
+
+interface PlatformEntry {
+  name: string;
+  url: string;
+  color: string;
+}
+
+/* 默认覆盖主流自媒体平台 + 创作/后台工具,可直接点击用 Chrome 打开 */
+const DEFAULT_PLATFORMS: PlatformEntry[] = [
+  { name: "抖音", url: "https://www.douyin.com", color: "#fe2c55" },
+  { name: "抖音创作", url: "https://creator.douyin.com", color: "#161823" },
+  { name: "小红书", url: "https://www.xiaohongshu.com", color: "#ff2442" },
+  { name: "小红书创作", url: "https://creator.xiaohongshu.com", color: "#ff6699" },
+  { name: "B站", url: "https://www.bilibili.com", color: "#00a1d6" },
+  { name: "视频号", url: "https://channels.weixin.qq.com", color: "#07c160" },
+  { name: "快手", url: "https://www.kuaishou.com", color: "#ff4906" },
+  { name: "微博", url: "https://weibo.com", color: "#e6162d" },
+  { name: "知乎", url: "https://www.zhihu.com", color: "#0084ff" },
+  { name: "今日头条", url: "https://www.toutiao.com", color: "#f04142" },
+  { name: "公众号", url: "https://mp.weixin.qq.com", color: "#2dc100" },
+  { name: "剪映", url: "https://www.capcut.cn", color: "#1c1c1e" },
+];
+
+const PLATFORMS_KEY = "launchpad_platforms";
+
+function loadPlatforms(): PlatformEntry[] {
+  try {
+    const raw = localStorage.getItem(PLATFORMS_KEY);
+    if (raw) return JSON.parse(raw) as PlatformEntry[];
+  } catch { /* ignore */ }
+  return DEFAULT_PLATFORMS;
+}
+
+function SocialPlatformsWidget() {
+  const [platforms, setPlatforms] = useState<PlatformEntry[]>(loadPlatforms);
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState("");
+  const [url, setUrl] = useState("");
+
+  const persist = (next: PlatformEntry[]) => {
+    setPlatforms(next);
+    try { localStorage.setItem(PLATFORMS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  };
+
+  const open = (p: PlatformEntry) => { openInChrome(p.url).catch(() => { /* 打开失败静默 */ }); };
+
+  const add = () => {
+    const n = name.trim();
+    let u = url.trim();
+    if (!n || !u) return;
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+    persist([...platforms, { name: n, url: u, color: "#64748b" }]);
+    setName(""); setUrl(""); setAdding(false);
+  };
+
+  const remove = (p: PlatformEntry) => persist(platforms.filter((x) => x !== p));
+
+  return (
+    <div className="card-shadow card-shadow-hover col-span-1 rounded-[var(--radius-lg)] border border-border bg-card p-6 flex flex-col transition-shadow">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="flex items-center gap-2 text-[13px] font-medium text-ink dark:text-ink"><span className="h-3.5 w-[3px] rounded-full bg-accent" />自媒体入口</h3>
+        <button
+          onClick={() => setAdding((v) => !v)}
+          className="btn-micro grid h-6 w-6 place-items-center rounded-md text-ink-faint hover:text-ink-muted transition-colors"
+          title="添加入口"
+        >
+          <span className="text-[15px] leading-none">＋</span>
+        </button>
+      </div>
+
+      {adding && (
+        <div className="mb-3 space-y-1.5">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="名称(如: 微博热搜)"
+            className="w-full px-2.5 py-1.5 text-[11px] bg-ink-50/40 dark:bg-ink-800/20 border border-ink-200/30 dark:border-ink-700/20 rounded-lg focus:outline-none focus:ring-1 focus:ring-accent/30 text-ink-muted placeholder-ink-faint"
+          />
+          <input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && add()}
+            placeholder="链接 https://..."
+            className="w-full px-2.5 py-1.5 text-[11px] bg-ink-50/40 dark:bg-ink-800/20 border border-ink-200/30 dark:border-ink-700/20 rounded-lg focus:outline-none focus:ring-1 focus:ring-accent/30 text-ink-muted placeholder-ink-faint"
+          />
+          <div className="flex gap-1.5">
+            <button onClick={add} className="flex-1 px-2 py-1 bg-ink dark:bg-ink text-white dark:text-paper-deep rounded-lg text-[11px] font-medium hover:opacity-90 btn-micro">添加</button>
+            <button onClick={() => { setAdding(false); setName(""); setUrl(""); }} className="px-2 py-1 rounded-lg text-[11px] text-ink-faint hover:text-ink-muted transition-colors">取消</button>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-4 gap-2.5">
+        {platforms.map((p) => (
+          <div key={p.url} className="group relative flex flex-col items-center gap-1">
+            <button
+              onClick={() => open(p)}
+              title={p.url}
+              className="grid h-11 w-11 place-items-center rounded-xl text-white text-[15px] font-semibold shadow-sm transition-transform hover:scale-105 active:scale-95"
+              style={{ background: p.color }}
+            >
+              {p.name.slice(0, 1)}
+            </button>
+            <span className="max-w-[46px] truncate text-center text-[10px] text-ink-muted">{p.name}</span>
+            <button
+              onClick={() => remove(p)}
+              title="移除"
+              className="absolute -right-1 -top-1 hidden h-4 w-4 place-items-center rounded-full bg-ink-700 text-[9px] text-white transition-colors hover:bg-red-500 group-hover:flex"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-[10px] text-ink-faint">点击图标用 Chrome 打开 · 悬停可移除 · 右上角 ＋ 可添加</p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  7. Recent Files Widget                                            */
 /* ------------------------------------------------------------------ */
 
@@ -560,6 +682,7 @@ const WIDGETS: { id: string; span: string; Comp: ComponentType }[] = [
   { id: "calculator", span: "col-span-1", Comp: CalculatorWidget },
   { id: "clipboard", span: "col-span-1", Comp: ClipboardHistory },
   { id: "recent", span: "col-span-1 md:col-span-2 xl:col-span-2", Comp: RecentFilesWidget },
+  { id: "social", span: "col-span-1 md:col-span-2 xl:col-span-2", Comp: SocialPlatformsWidget },
 ];
 
 const WIDGET_IDS = WIDGETS.map((w) => w.id);
